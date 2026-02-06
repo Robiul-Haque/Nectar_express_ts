@@ -6,6 +6,7 @@ import status from "http-status";
 import User from "./user.model";
 import otpGenerator from "../../utils/otpGenerator";
 import { sendOTPEmail } from "../../utils/sendOtpEmail";
+import logger from "../../utils/logger";
 
 export const signUp = catchAsync(async (req: Request, res: Response) => {
     const parsed = emailRegisterSchema.safeParse(req.body);
@@ -31,9 +32,7 @@ export const signUp = catchAsync(async (req: Request, res: Response) => {
     });
 
     // Send OTP email async (non-blocking)
-    sendOTPEmail({ to: email, toName: name, otp }).catch((err: Error) =>
-        console.error("[OTP Email Async Error]", err)
-    );
+    sendOTPEmail({ to: email, toName: name, otp }).catch((err: Error) => logger.info(`[OTP Email Async Error] ${err}`));
 
     // Immediate response to client
     sendResponse(res, 201, "User registered successfully. OTP sent to email", { userId: user._id });

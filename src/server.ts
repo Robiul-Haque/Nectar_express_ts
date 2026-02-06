@@ -2,13 +2,32 @@ import mongoose from 'mongoose';
 import app from './app';
 import { env } from './config/env';
 import logger from './utils/logger';
+import { verifySMTP } from './utils/sendOtpEmail';
 
 async function bootstrap() {
-    await mongoose.connect(env.DB_URL);
-    logger.info('DB connected');
 
-    app.listen(env.PORT, () => {
-        logger.info(`Server running on port ${env.PORT}`);
+    // 1️⃣ Start server instantly
+    const server = app.listen(env.PORT, () => logger.info(`🚀 Server running on port ${env.PORT}`));
+
+    // 2️⃣ DB connect (background)
+    mongoose
+        .connect(env.DB_URL)
+        .then(() => logger.info('✅ DB connected'))
+        .catch((err) => {
+            logger.error('❌ DB connection failed', err);
+            process.exit(1);
+        });
+
+    // 3️⃣ SMTP verify (background — NON BLOCKING)
+    if (env.NODE_ENV !== 'production') verifySMTP();
+
+
+    // 4️⃣ Graceful shutdown
+    process.on('SIGTERM', async () => {
+        logger.warn('SIGTERM received. Shutting down...');
+        await mongoose.disconnect();
+        server.close();
+        process.exit(0);
     });
 }
 

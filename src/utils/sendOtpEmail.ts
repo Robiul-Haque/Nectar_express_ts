@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import logger from "./logger";
 
 dotenv.config();
 
@@ -20,13 +21,14 @@ export const transporter = nodemailer.createTransport({
 });
 
 // Verify SMTP config
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("SMTP Verification Failed:", error);
-    } else {
-        console.log("SMTP Ready to send emails ✅");
+export const verifySMTP = async (): Promise<void> => {
+    try {
+        await transporter.verify();
+        logger.info('📧 SMTP Ready to send emails');
+    } catch (error) {
+        logger.error(`❌ SMTP Verification Failed: ${(error as Error).message}`);
     }
-});
+};
 
 // Send OTP Email
 export const sendOTP = async ({ to, toName, otp }: OTPParams) => {
