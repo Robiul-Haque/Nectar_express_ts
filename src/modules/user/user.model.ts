@@ -19,7 +19,8 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
         },
         password: {
             type: String,
-            select: false
+            select: true,
+            trim: true
         },
         provider: {
             type: String,
