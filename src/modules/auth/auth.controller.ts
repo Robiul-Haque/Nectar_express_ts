@@ -102,7 +102,7 @@ export const googleLogin = catchAsync(async (req: Request, res: Response) => {
         return sendResponse(res, status.BAD_REQUEST, "Firebase ID token is required");
     }
 
-    // Verify Firebase Google token
+    // 🔐 Verify Firebase token
     const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
 
     const { email, name, picture } = decodedToken;
@@ -111,24 +111,41 @@ export const googleLogin = catchAsync(async (req: Request, res: Response) => {
         return sendResponse(res, status.UNAUTHORIZED, "Invalid Google account");
     }
 
-    // Check if user already exists (google provider)
-    let user = await User.findOne({ email, provider: "google" });
+    // 🔎 Check if user exists by email (not provider-specific first)
+    let user = await User.findOne({ email });
 
-    // If user does not exist, create new one
     if (!user) {
-        user = await User.create({ name: name || email.split("@")[0], email, provider: "google", avatar: picture || "", isVerified: true, role: "user" });
+        // 🆕 Create new Google user
+        user = await User.create({
+            name: name || email.split("@")[0],
+            email,
+            provider: "google",
+            avatar: picture || "",
+            isVerified: true,
+            role: "user",
+        });
+    } else {
+        // 🔄 If existing user but different provider
+        if (user.provider !== "google") {
+            user.provider = "google";
+            user.isVerified = true;
+            await user.save();
+        }
     }
 
-    // Generate JWT
-    const token = signToken({ userId: user._id, role: user.role, provider: user.provider });
+    // 🔑 Issue backend JWT
+    // const token = signToken({
+    //     userId: user._id,
+    //     role: user.role,
+    //     provider: user.provider,
+    // });
 
-    // Send response
     return sendResponse(
         res,
         status.OK,
         "Google login successful",
         {
-            token,
+            'token': '',
             user: {
                 id: user._id,
                 name: user.name,
