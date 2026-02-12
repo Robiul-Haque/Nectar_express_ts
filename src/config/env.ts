@@ -13,4 +13,8 @@ export const env = {
     FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID as string,
     FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL as string,
     FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY as string,
+    JWT_ACCESS_TOKEN: process.env.JWT_ACCESS_TOKEN as string,
+    ACCESS_TOKEN_EXPIRES_IN: process.env.ACCESS_TOKEN_EXPIRES_IN as string,
+    JWT_REFRESH_TOKEN: process.env.JWT_REFRESH_TOKEN as string,
+    REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN as string,
 };

@@ -8,6 +8,9 @@ import { sendOTPEmail } from "../../utils/sendOtpEmail";
 import logger from "../../utils/logger";
 import { emailRegisterSchema, otpVerifySchema } from "./auth.validation";
 import { firebaseAdmin } from "../../config/firebaseAdmin.config";
+import { createToken } from "../../utils/createToken";
+import { env } from "../../config/env";
+import { SignOptions } from "jsonwebtoken";
 
 export const signUp = catchAsync(async (req: Request, res: Response) => {
     // 1️⃣ Validate request body
@@ -96,7 +99,7 @@ export const verifyOTP = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const googleLogin = catchAsync(async (req: Request, res: Response) => {
-    const { idToken } = req.body;
+    const { idToken, fcmToken } = req.body;
 
     if (!idToken) {
         return sendResponse(res, status.BAD_REQUEST, "Firebase ID token is required");
@@ -120,6 +123,7 @@ export const googleLogin = catchAsync(async (req: Request, res: Response) => {
             name: name || email.split("@")[0],
             email,
             provider: "google",
+            fcmTokens: fcmToken,
             avatar: picture || "",
             isVerified: true,
             role: "user",
@@ -134,18 +138,27 @@ export const googleLogin = catchAsync(async (req: Request, res: Response) => {
     }
 
     // 🔑 Issue backend JWT
-    // const token = signToken({
-    //     userId: user._id,
-    //     role: user.role,
-    //     provider: user.provider,
-    // });
+    const accessToken = createToken(
+        "access",
+        {
+            sub: user._id.toString(),
+            role: user.role,
+            provider: user.provider,
+        },
+        {
+            secret: env.JWT_ACCESS_TOKEN,
+            expiresIn: env.ACCESS_TOKEN_EXPIRES_IN as SignOptions["expiresIn"], // ✅ Type assertion
+            issuer: "nectar-api",
+            audience: "nectar-users",
+        }
+    );
 
     return sendResponse(
         res,
         status.OK,
         "Google login successful",
         {
-            'token': '',
+            accessToken,
             user: {
                 id: user._id,
                 name: user.name,

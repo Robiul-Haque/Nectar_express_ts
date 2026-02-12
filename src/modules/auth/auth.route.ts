@@ -5,6 +5,6 @@ const router = Router();
 
 router.post("/signup", signUp);
 router.post("/verify-otp", verifyOTP);
-router.post("/firebase/google", googleLogin);
+router.post("/firebase/google-login", googleLogin);
 
 export default router;
